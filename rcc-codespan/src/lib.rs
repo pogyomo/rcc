@@ -1,5 +1,10 @@
 use std::ops::{Add, AddAssign};
 
+/// A trait for the object which have its span.
+pub trait Spannable {
+    fn span(&self) -> CodeSpan;
+}
+
 /// A struct which indicate the range of source code.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CodeSpan {
