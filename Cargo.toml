@@ -1,11 +1,5 @@
-[package]
-name = "rcc"
-version = "0.1.0"
-edition = "2021"
-
 [workspace]
 members = [
+    "rcc",
     "rcc-codespan"
 ]
-
-[dependencies]
