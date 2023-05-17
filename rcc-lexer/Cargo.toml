@@ -1,0 +1,9 @@
+[package]
+name = "rcc-lexer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rcc-codespan = { path = "../rcc-codespan" }
+rcc-token = { path = "../rcc-token" }
+thiserror = "1.0.40"
