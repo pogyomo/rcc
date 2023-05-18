@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "rcc",
+    "rcc-ast",
     "rcc-codespan",
     "rcc-lexer",
     "rcc-token",

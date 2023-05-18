@@ -33,6 +33,8 @@ pub enum TokenKind {
     Assign,
     /// ";"
     Semicolon,
+    /// ","
+    Comma,
     /// "("
     LParen,
     /// ")"
