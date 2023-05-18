@@ -64,6 +64,7 @@ impl<'a> LexInput<'a> {
             ('>', _)   => self.consume_symbol(start, TokenKind::GT, 1),
             ('=', '=') => self.consume_symbol(start, TokenKind::EQ, 2),
             ('=', _)   => self.consume_symbol(start, TokenKind::Assign, 1),
+            (';', _)   => self.consume_symbol(start, TokenKind::Semicolon, 1),
             ('!', '=') => self.consume_symbol(start, TokenKind::NE, 2),
             ('[', _)   => self.consume_symbol(start, TokenKind::LSquare, 1),
             (']', _)   => self.consume_symbol(start, TokenKind::RSquare, 1),
@@ -148,21 +149,22 @@ mod test {
 
     #[test]
     fn one_character_symbol() {
-        let tokens = lex("+-*/<> =()[]{}").unwrap();
+        let tokens = lex("+-*/<> =;()[]{}").unwrap();
         assert_eq!(tokens, vec![
-            Token::new(TokenKind::Plus,    CodeSpan::new(0, 1)),
-            Token::new(TokenKind::Minus,   CodeSpan::new(1, 1)),
-            Token::new(TokenKind::Star,    CodeSpan::new(2, 1)),
-            Token::new(TokenKind::Slash,   CodeSpan::new(3, 1)),
-            Token::new(TokenKind::LT,      CodeSpan::new(4, 1)),
-            Token::new(TokenKind::GT,      CodeSpan::new(5, 1)),
-            Token::new(TokenKind::Assign,  CodeSpan::new(7, 1)),
-            Token::new(TokenKind::LParen,  CodeSpan::new(8, 1)),
-            Token::new(TokenKind::RParen,  CodeSpan::new(9, 1)),
-            Token::new(TokenKind::LSquare, CodeSpan::new(10, 1)),
-            Token::new(TokenKind::RSquare, CodeSpan::new(11, 1)),
-            Token::new(TokenKind::LCurly,  CodeSpan::new(12, 1)),
-            Token::new(TokenKind::RCurly,  CodeSpan::new(13, 1)),
+            Token::new(TokenKind::Plus,      CodeSpan::new(0, 1)),
+            Token::new(TokenKind::Minus,     CodeSpan::new(1, 1)),
+            Token::new(TokenKind::Star,      CodeSpan::new(2, 1)),
+            Token::new(TokenKind::Slash,     CodeSpan::new(3, 1)),
+            Token::new(TokenKind::LT,        CodeSpan::new(4, 1)),
+            Token::new(TokenKind::GT,        CodeSpan::new(5, 1)),
+            Token::new(TokenKind::Assign,    CodeSpan::new(7, 1)),
+            Token::new(TokenKind::Semicolon, CodeSpan::new(8, 1)),
+            Token::new(TokenKind::LParen,    CodeSpan::new(9, 1)),
+            Token::new(TokenKind::RParen,    CodeSpan::new(10, 1)),
+            Token::new(TokenKind::LSquare,   CodeSpan::new(11, 1)),
+            Token::new(TokenKind::RSquare,   CodeSpan::new(12, 1)),
+            Token::new(TokenKind::LCurly,    CodeSpan::new(13, 1)),
+            Token::new(TokenKind::RCurly,    CodeSpan::new(14, 1)),
         ])
     }
 

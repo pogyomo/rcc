@@ -31,6 +31,8 @@ pub enum TokenKind {
     GT,
     /// "="
     Assign,
+    /// ";"
+    Semicolon,
     /// "("
     LParen,
     /// ")"
