@@ -54,55 +54,37 @@ impl<'a> LexInput<'a> {
         match (self.first(), self.second()) {
             ('+', _) => {
                 self.next();
-                Ok(Token::new(TokenKind::Plus, CodeSpan::new(start, self.offset() - start)))
+                let span = CodeSpan::new(start, self.offset() - start);
+                Ok(Token::new(TokenKind::Plus, span))
             }
             ('-', _) => {
                 self.next();
-                Ok(Token::new(TokenKind::Minus, CodeSpan::new(start, self.offset() - start)))
+                let span = CodeSpan::new(start, self.offset() - start);
+                Ok(Token::new(TokenKind::Minus, span))
             }
             ('*', _) => {
                 self.next();
-                Ok(Token::new(TokenKind::Star, CodeSpan::new(start, self.offset() - start)))
+                let span = CodeSpan::new(start, self.offset() - start);
+                Ok(Token::new(TokenKind::Star, span))
             }
             ('/', _) => {
                 self.next();
-                Ok(Token::new(TokenKind::Slash, CodeSpan::new(start, self.offset() - start)))
+                let span = CodeSpan::new(start, self.offset() - start);
+                Ok(Token::new(TokenKind::Slash, span))
             }
             ('0', 'x') => {
                 self.next(); self.next();
-                let value = self.parse_integer(16);
-                let span = CodeSpan::new(start, self.offset() - start);
-                match value {
-                    Ok(value) => Ok(Token::new(TokenKind::Integer(value), span)),
-                    Err(from) => Err(LexError::IntegerParseError { span, from }),
-                }
+                self.consume_integer(start, 16)
             }
             ('0', 'b') => {
                 self.next(); self.next();
-                let value = self.parse_integer(2);
-                let span = CodeSpan::new(start, self.offset() - start);
-                match value {
-                    Ok(value) => Ok(Token::new(TokenKind::Integer(value), span)),
-                    Err(from) => Err(LexError::IntegerParseError { span, from }),
-                }
+                self.consume_integer(start, 2)
             }
             ('0', _) => {
                 self.next();
-                let value = self.parse_integer(8);
-                let span = CodeSpan::new(start, self.offset() - start);
-                match value {
-                    Ok(value) => Ok(Token::new(TokenKind::Integer(value), span)),
-                    Err(from) => Err(LexError::IntegerParseError { span, from }),
-                }
+                self.consume_integer(start, 8)
             }
-            (ch, _) if ch.is_ascii_digit() => {
-                let value = self.parse_integer(10);
-                let span = CodeSpan::new(start, self.offset() - start);
-                match value {
-                    Ok(value) => Ok(Token::new(TokenKind::Integer(value), span)),
-                    Err(from) => Err(LexError::IntegerParseError { span, from }),
-                }
-            }
+            (ch, _) if ch.is_ascii_digit() => self.consume_integer(start, 10),
             (_, _) => {
                 self.next();
                 let span = CodeSpan::new(start, self.offset() - start);
@@ -117,12 +99,18 @@ impl<'a> LexInput<'a> {
         }
     }
 
-    fn parse_integer(&mut self, radix: u32) -> Result<u64, ParseIntError> {
+    /// Consume characters and construct integer token with start offset of the integer.
+    fn consume_integer(&mut self, start: usize, radix: u32) -> Result<Token, LexError> {
         let mut body = String::new();
         while self.first().is_digit(radix) {
             body.push(self.next());
         }
-        u64::from_str_radix(&body, radix)
+        let value = u64::from_str_radix(&body, radix);
+        let span = CodeSpan::new(start, self.offset() - start);
+        match value {
+            Ok(value) => Ok(Token::new(TokenKind::Integer(value), span)),
+            Err(from) => Err(LexError::IntegerParseError { span, from }),
+        }
     }
 }
 
