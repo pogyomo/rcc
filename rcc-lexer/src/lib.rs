@@ -4,7 +4,6 @@ use std::num::ParseIntError;
 use rcc_codespan::{CodeSpan, Spannable};
 use rcc_token::{Token, TokenKind};
 use thiserror::Error;
-
 use crate::input::LexInput;
 
 /// An error which can be returned when lexing a string.
@@ -49,29 +48,14 @@ pub fn lex<S: AsRef<str>>(input: S) -> Result<Vec<Token>, Vec<LexError>> {
 }
 
 impl<'a> LexInput<'a> {
-    pub fn token(&mut self) -> Result<Token, LexError> {
+    /// Advance the input and construct a token.
+    fn token(&mut self) -> Result<Token, LexError> {
         let start = self.offset();
         match (self.first(), self.second()) {
-            ('+', _) => {
-                self.next();
-                let span = CodeSpan::new(start, self.offset() - start);
-                Ok(Token::new(TokenKind::Plus, span))
-            }
-            ('-', _) => {
-                self.next();
-                let span = CodeSpan::new(start, self.offset() - start);
-                Ok(Token::new(TokenKind::Minus, span))
-            }
-            ('*', _) => {
-                self.next();
-                let span = CodeSpan::new(start, self.offset() - start);
-                Ok(Token::new(TokenKind::Star, span))
-            }
-            ('/', _) => {
-                self.next();
-                let span = CodeSpan::new(start, self.offset() - start);
-                Ok(Token::new(TokenKind::Slash, span))
-            }
+            ('+', _) => self.consume_symbol(start, TokenKind::Plus, 1),
+            ('-', _) => self.consume_symbol(start, TokenKind::Minus, 1),
+            ('*', _) => self.consume_symbol(start, TokenKind::Star, 1),
+            ('/', _) => self.consume_symbol(start, TokenKind::Slash, 1),
             ('0', 'x') => {
                 self.next(); self.next();
                 self.consume_integer(start, 16)
@@ -84,7 +68,7 @@ impl<'a> LexInput<'a> {
                 self.next();
                 self.consume_integer(start, 8)
             }
-            (ch, _) if ch.is_ascii_digit() => self.consume_integer(start, 10),
+            (ch, _) if ch.is_ascii_digit()    => self.consume_integer(start, 10),
             (ch, _) if is_identifier_head(ch) => self.consume_identifier(start),
             (_, _) => {
                 self.next();
@@ -94,13 +78,23 @@ impl<'a> LexInput<'a> {
         }
     }
 
+    /// Discard leading whitespace characters.
     fn trim_whitespace(&mut self) {
         while self.first().is_ascii_whitespace() {
             self.next();
         }
     }
 
-    /// Consume characters and construct integer token with start offset of the integer.
+    /// Consume given number of characters and construct symbol token.
+    fn consume_symbol(&mut self, start: usize, kind: TokenKind, num: usize) -> Result<Token, LexError> {
+        for _ in 0..num {
+            self.next();
+        }
+        let span = CodeSpan::new(start, self.offset() - start);
+        Ok(Token::new(kind, span))
+    }
+
+    /// Consume characters and construct integer token.
     fn consume_integer(&mut self, start: usize, radix: u32) -> Result<Token, LexError> {
         let mut body = String::new();
         while self.first().is_digit(radix) {
@@ -114,6 +108,7 @@ impl<'a> LexInput<'a> {
         }
     }
 
+    /// Consume characters and construct identifier token.
     fn consume_identifier(&mut self, start: usize) -> Result<Token, LexError> {
         let mut body = String::new();
         while is_identifier_rest(self.first()) {
