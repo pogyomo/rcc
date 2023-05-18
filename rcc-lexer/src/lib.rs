@@ -7,7 +7,7 @@ use thiserror::Error;
 use crate::input::LexInput;
 
 /// An error which can be returned when lexing a string.
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum LexError {
     #[error("unexpected character found")]
     UnexpectedCharacter{ span: CodeSpan },
@@ -64,7 +64,7 @@ impl<'a> LexInput<'a> {
                 self.next(); self.next();
                 self.consume_integer(start, 2)
             }
-            ('0', _) => {
+            ('0', ch) if ch.is_digit(8) => {
                 self.next();
                 self.consume_integer(start, 8)
             }
@@ -161,12 +161,13 @@ mod test {
 
     #[test]
     fn test_integer() {
-        let tokens = lex("10 0x10 0b10 010").unwrap();
+        let tokens = lex("10 0x10 0b10 010 0").unwrap();
         assert_eq!(tokens, vec![
             Token::new(TokenKind::Integer(10),   CodeSpan::new(0, 2)),
             Token::new(TokenKind::Integer(0x10), CodeSpan::new(3, 4)),
             Token::new(TokenKind::Integer(0b10), CodeSpan::new(8, 4)),
             Token::new(TokenKind::Integer(0o10), CodeSpan::new(13, 3)),
+            Token::new(TokenKind::Integer(0),    CodeSpan::new(17, 1)),
         ])
     }
 
