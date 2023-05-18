@@ -85,6 +85,7 @@ impl<'a> LexInput<'a> {
                 self.consume_integer(start, 8)
             }
             (ch, _) if ch.is_ascii_digit() => self.consume_integer(start, 10),
+            (ch, _) if is_identifier_head(ch) => self.consume_identifier(start),
             (_, _) => {
                 self.next();
                 let span = CodeSpan::new(start, self.offset() - start);
@@ -112,6 +113,23 @@ impl<'a> LexInput<'a> {
             Err(from) => Err(LexError::IntegerParseError { span, from }),
         }
     }
+
+    fn consume_identifier(&mut self, start: usize) -> Result<Token, LexError> {
+        let mut body = String::new();
+        while is_identifier_rest(self.first()) {
+            body.push(self.next());
+        }
+        let span = CodeSpan::new(start, self.offset() - start);
+        Ok(Token::new(TokenKind::Identifier(body), span))
+    }
+}
+
+fn is_identifier_head(ch: char) -> bool {
+    ch.is_ascii_alphabetic() || ch == '_'
+}
+
+fn is_identifier_rest(ch: char) -> bool {
+    is_identifier_head(ch) || ch.is_ascii_digit()
 }
 
 #[cfg(test)]
@@ -128,6 +146,21 @@ mod test {
             Token::new(TokenKind::Minus, CodeSpan::new(1, 1)),
             Token::new(TokenKind::Star,  CodeSpan::new(2, 1)),
             Token::new(TokenKind::Slash, CodeSpan::new(3, 1)),
+        ])
+    }
+
+    #[test]
+    fn test_identifier() {
+        let tokens = lex("Hello_World L10").unwrap();
+        assert_eq!(tokens, vec![
+            Token::new(
+                TokenKind::Identifier(String::from("Hello_World")),
+                CodeSpan::new(0, 11)
+            ),
+            Token::new(
+                TokenKind::Identifier(String::from("L10")),
+                CodeSpan::new(12, 3)
+            ),
         ])
     }
 
