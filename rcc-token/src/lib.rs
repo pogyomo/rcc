@@ -16,10 +16,47 @@ impl Spannable for Token {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TokenKind {
+    // One-character token
+    /// "+"
     Plus,
+    /// "-"
     Minus,
+    /// "*"
     Star,
+    /// "/"
     Slash,
+    /// "<"
+    LT,
+    /// ">"
+    GT,
+    /// "="
+    Assign,
+    /// "("
+    LParen,
+    /// ")"
+    RParen,
+    /// "["
+    LSquare,
+    /// "]"
+    RSquare,
+    /// "{"
+    LCurly,
+    /// "}"
+    RCurly,
+
+    // Two-character token
+    /// "<="
+    LE,
+    /// ">="
+    GE,
+    /// "=="
+    EQ,
+    /// "!="
+    NE,
+
+    // Literal
+    /// "10", "0x10", "0b10", "010"
     Integer(u64),
+    /// "hello_world", "Ident", "L10"
     Identifier(String),
 }

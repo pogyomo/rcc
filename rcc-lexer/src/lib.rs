@@ -52,10 +52,23 @@ impl<'a> LexInput<'a> {
     fn token(&mut self) -> Result<Token, LexError> {
         let start = self.offset();
         match (self.first(), self.second()) {
-            ('+', _) => self.consume_symbol(start, TokenKind::Plus, 1),
-            ('-', _) => self.consume_symbol(start, TokenKind::Minus, 1),
-            ('*', _) => self.consume_symbol(start, TokenKind::Star, 1),
-            ('/', _) => self.consume_symbol(start, TokenKind::Slash, 1),
+            ('+', _)   => self.consume_symbol(start, TokenKind::Plus, 1),
+            ('-', _)   => self.consume_symbol(start, TokenKind::Minus, 1),
+            ('*', _)   => self.consume_symbol(start, TokenKind::Star, 1),
+            ('/', _)   => self.consume_symbol(start, TokenKind::Slash, 1),
+            ('(', _)   => self.consume_symbol(start, TokenKind::LParen, 1),
+            (')', _)   => self.consume_symbol(start, TokenKind::RParen, 1),
+            ('<', '=') => self.consume_symbol(start, TokenKind::LE, 2),
+            ('<', _)   => self.consume_symbol(start, TokenKind::LT, 1),
+            ('>', '=') => self.consume_symbol(start, TokenKind::GE, 2),
+            ('>', _)   => self.consume_symbol(start, TokenKind::GT, 1),
+            ('=', '=') => self.consume_symbol(start, TokenKind::EQ, 2),
+            ('=', _)   => self.consume_symbol(start, TokenKind::Assign, 1),
+            ('!', '=') => self.consume_symbol(start, TokenKind::NE, 2),
+            ('[', _)   => self.consume_symbol(start, TokenKind::LSquare, 1),
+            (']', _)   => self.consume_symbol(start, TokenKind::RSquare, 1),
+            ('{', _)   => self.consume_symbol(start, TokenKind::LCurly, 1),
+            ('}', _)   => self.consume_symbol(start, TokenKind::RCurly, 1),
             ('0', 'x') => {
                 self.next(); self.next();
                 self.consume_integer(start, 16)
@@ -134,18 +147,38 @@ mod test {
     use super::lex;
 
     #[test]
-    fn test_symbol() {
-        let tokens = lex("+-*/").unwrap();
+    fn one_character_symbol() {
+        let tokens = lex("+-*/<> =()[]{}").unwrap();
         assert_eq!(tokens, vec![
-            Token::new(TokenKind::Plus,  CodeSpan::new(0, 1)),
-            Token::new(TokenKind::Minus, CodeSpan::new(1, 1)),
-            Token::new(TokenKind::Star,  CodeSpan::new(2, 1)),
-            Token::new(TokenKind::Slash, CodeSpan::new(3, 1)),
+            Token::new(TokenKind::Plus,    CodeSpan::new(0, 1)),
+            Token::new(TokenKind::Minus,   CodeSpan::new(1, 1)),
+            Token::new(TokenKind::Star,    CodeSpan::new(2, 1)),
+            Token::new(TokenKind::Slash,   CodeSpan::new(3, 1)),
+            Token::new(TokenKind::LT,      CodeSpan::new(4, 1)),
+            Token::new(TokenKind::GT,      CodeSpan::new(5, 1)),
+            Token::new(TokenKind::Assign,  CodeSpan::new(7, 1)),
+            Token::new(TokenKind::LParen,  CodeSpan::new(8, 1)),
+            Token::new(TokenKind::RParen,  CodeSpan::new(9, 1)),
+            Token::new(TokenKind::LSquare, CodeSpan::new(10, 1)),
+            Token::new(TokenKind::RSquare, CodeSpan::new(11, 1)),
+            Token::new(TokenKind::LCurly,  CodeSpan::new(12, 1)),
+            Token::new(TokenKind::RCurly,  CodeSpan::new(13, 1)),
         ])
     }
 
     #[test]
-    fn test_identifier() {
+    fn two_character_symbol() {
+        let tokens = lex("<= >= == !=").unwrap();
+        assert_eq!(tokens, vec![
+            Token::new(TokenKind::LE, CodeSpan::new(0, 2)),
+            Token::new(TokenKind::GE, CodeSpan::new(3, 2)),
+            Token::new(TokenKind::EQ, CodeSpan::new(6, 2)),
+            Token::new(TokenKind::NE, CodeSpan::new(9, 2)),
+        ])
+    }
+
+    #[test]
+    fn identifier() {
         let tokens = lex("Hello_World L10").unwrap();
         assert_eq!(tokens, vec![
             Token::new(
@@ -160,7 +193,7 @@ mod test {
     }
 
     #[test]
-    fn test_integer() {
+    fn integer() {
         let tokens = lex("10 0x10 0b10 010 0").unwrap();
         assert_eq!(tokens, vec![
             Token::new(TokenKind::Integer(10),   CodeSpan::new(0, 2)),
@@ -172,7 +205,7 @@ mod test {
     }
 
     #[test]
-    fn test_empty_input() {
+    fn empty_input() {
         let tokens = lex("").unwrap();
         assert!(tokens.is_empty());
     }
