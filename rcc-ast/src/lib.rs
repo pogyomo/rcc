@@ -7,15 +7,27 @@ pub enum Statement {
     FunctionDeclaration(FunctionDeclaration),
     VariableDeclaration(VariableDeclaration),
     VariableAssignment(VariableAssignment),
+    ReturnStatement(ReturnStatement),
+    BreakStatement(BreakStatement),
+    ContinueStatement(ContinueStatement),
+    ForStatement(ForStatement),
+    WhileStatement(WhileStatement),
+    IfStatement(IfStatement),
 }
 
 impl Spannable for Statement {
     fn span(&self) -> CodeSpan {
         use Statement::*;
         match self {
-            FunctionDeclaration(decl) => decl.span(),
-            VariableDeclaration(decl) => decl.span(),
-            VariableAssignment(asig)  => asig.span(),
+            FunctionDeclaration(stmt) => stmt.span(),
+            VariableDeclaration(stmt) => stmt.span(),
+            VariableAssignment(stmt) => stmt.span(),
+            ReturnStatement(stmt) => stmt.span(),
+            BreakStatement(stmt) => stmt.span(),
+            ContinueStatement(stmt) => stmt.span(),
+            ForStatement(stmt) => stmt.span(),
+            WhileStatement(stmt) => stmt.span(),
+            IfStatement(stmt) => stmt.span(),
         }
     }
 }
@@ -141,6 +153,104 @@ impl VariableAssignName {
 }
 
 impl Spannable for VariableAssignName {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+/// return; or return expr;
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ReturnStatement {
+    span: CodeSpan,
+    expr: Option<Expression>,
+}
+
+impl Spannable for ReturnStatement {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+/// break;
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct BreakStatement {
+    span: CodeSpan,
+}
+
+impl Spannable for BreakStatement {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+/// continue;
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ContinueStatement {
+    span: CodeSpan,
+}
+
+impl Spannable for ContinueStatement {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+/// for (init; cond; update) {
+///     stmt1;
+///     ...
+///     stmtn;
+/// }
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ForStatement {
+    span: CodeSpan,
+    init_expr: Option<Expression>,
+    cond_expr: Option<Expression>,
+    update_expr: Option<Expression>,
+    body: Vec<Statement>,
+}
+
+impl Spannable for ForStatement {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+/// while (cond) {
+///     stmt1;
+///     ...
+///     stmtn;
+/// }
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct WhileStatement {
+    span: CodeSpan,
+    cond_expr: Expression,
+    body: Vec<Statement>,
+}
+
+impl Spannable for WhileStatement {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+/// if (cond) {
+///     stmt1;
+///     ...
+///     stmtn;
+/// } else {
+///     stmt1;
+///     ...
+///     stmtn;
+/// }
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct IfStatement {
+    span: CodeSpan,
+    cond_expr: Expression,
+    body: Vec<Statement>,
+    else_stmt: Option<Vec<Statement>>
+}
+
+impl Spannable for IfStatement {
     fn span(&self) -> CodeSpan {
         self.span
     }
