@@ -6,7 +6,7 @@ use rcc_codespan::{CodeSpan, Spannable};
 pub enum Statement {
     FunctionDeclaration(FunctionDeclaration),
     VariableDeclaration(VariableDeclaration),
-    VariableAssignment(VariableAssignment),
+    ExpressionStatement(ExpressionStatement),
     ReturnStatement(ReturnStatement),
     BreakStatement(BreakStatement),
     ContinueStatement(ContinueStatement),
@@ -21,7 +21,7 @@ impl Spannable for Statement {
         match self {
             FunctionDeclaration(stmt) => stmt.span(),
             VariableDeclaration(stmt) => stmt.span(),
-            VariableAssignment(stmt) => stmt.span(),
+            ExpressionStatement(stmt) => stmt.span(),
             ReturnStatement(stmt) => stmt.span(),
             BreakStatement(stmt) => stmt.span(),
             ContinueStatement(stmt) => stmt.span(),
@@ -127,34 +127,15 @@ impl Spannable for VariableDeclName {
     }
 }
 
-/// name = expr;
+/// expr;
 #[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct VariableAssignment {
-    name: VariableAssignName,
+pub struct ExpressionStatement {
     expr: Expression,
 }
 
-impl Spannable for VariableAssignment {
+impl Spannable for ExpressionStatement {
     fn span(&self) -> CodeSpan {
-        self.name.span() + self.expr.span()
-    }
-}
-
-#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct VariableAssignName {
-    name: String,
-    span: CodeSpan,
-}
-
-impl VariableAssignName {
-    pub fn name(&self) -> &str {
-        self.name.as_str()
-    }
-}
-
-impl Spannable for VariableAssignName {
-    fn span(&self) -> CodeSpan {
-        self.span
+        self.expr.span()
     }
 }
 
@@ -258,11 +239,154 @@ impl Spannable for IfStatement {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Expression {
-    // TODO
+    IntegerExpression(IntegerExpression),
+    VariableExpression(VariableExpression),
+    VariableAssignment(VariableAssignment),
+    FunctionCall(FunctionCall),
+    PrefixExpression(PrefixExpression),
+    InfixExpression(InfixExpression),
 }
 
 impl Spannable for Expression {
     fn span(&self) -> CodeSpan {
-        todo!()
+        use Expression::*;
+        match self {
+            IntegerExpression(expr) => expr.span(),
+            VariableExpression(expr) => expr.span(),
+            VariableAssignment(expr) => expr.span(),
+            FunctionCall(expr) => expr.span(),
+            PrefixExpression(expr) => expr.span(),
+            InfixExpression(expr) => expr.span(),
+        }
     }
+}
+
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct IntegerExpression {
+    span: CodeSpan,
+    value: u64,
+}
+
+impl Spannable for IntegerExpression {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct VariableExpression {
+    span: CodeSpan,
+    name: String,
+}
+
+impl Spannable for VariableExpression {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+/// name = expr
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct VariableAssignment {
+    name: VariableAssignName,
+    expr: Box<Expression>,
+}
+
+impl Spannable for VariableAssignment {
+    fn span(&self) -> CodeSpan {
+        self.name.span() + self.expr.span()
+    }
+}
+
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct VariableAssignName {
+    name: String,
+    span: CodeSpan,
+}
+
+impl VariableAssignName {
+    pub fn name(&self) -> &str {
+        self.name.as_str()
+    }
+}
+
+impl Spannable for VariableAssignName {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FunctionCall {
+    name: FunctionCallName,
+    param: Vec<Expression>,
+}
+
+impl Spannable for FunctionCall {
+    fn span(&self) -> CodeSpan {
+        let mut span = self.name.span();
+        for param in self.param.iter() {
+            span += param.span();
+        }
+        span
+    }
+}
+
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FunctionCallName {
+    span: CodeSpan,
+    name: String,
+}
+
+impl Spannable for FunctionCallName {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+/// op expr
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PrefixExpression {
+    span: CodeSpan,
+    op: PrefixOp,
+    expr: Box<Expression>,
+}
+
+impl Spannable for PrefixExpression {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum PrefixOp {
+    Negation,
+}
+
+/// lhs op rhs
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct InfixExpression {
+    op: PrefixOp,
+    lhs: Box<Expression>,
+    rhs: Box<Expression>,
+}
+
+impl Spannable for InfixExpression {
+    fn span(&self) -> CodeSpan {
+        self.lhs.span() + self.rhs.span()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum InfixOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    LT,
+    GT,
+    LE,
+    GE,
+    EQ,
+    NE,
 }
