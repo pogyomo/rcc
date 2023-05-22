@@ -11,10 +11,9 @@ mod stack;
 
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
 pub enum ParseError {
-    #[error("expect {expect}, but got {got}")]
+    #[error("expect {expect}, but got the token")]
     UnexpectedTokenFound {
         expect: &'static str,
-        got: String,
         span: CodeSpan,
     },
     #[error("expect {expect} after the token, but not found")]
@@ -81,7 +80,6 @@ impl NonEmptyParser {
             TokenKind::LParen => (),
             _ => return Err(ParseError::UnexpectedTokenFound {
                 expect: "(",
-                got: String::new(), // TODO
                 span: stack.inspect().span(),
             })
         }
@@ -93,7 +91,6 @@ impl NonEmptyParser {
             TokenKind::RParen => (),
             _ => return Err(ParseError::UnexpectedTokenFound {
                 expect: ")",
-                got: String::new(), // TODO
                 span: stack.inspect().span(),
             })
         }
@@ -103,7 +100,6 @@ impl NonEmptyParser {
             TokenKind::LCurly => (),
             _ => return Err(ParseError::UnexpectedTokenFound {
                 expect: "{",
-                got: String::new(), // TODO
                 span: stack.inspect().span(),
             })
         }
@@ -140,7 +136,6 @@ impl NonEmptyParser {
             TokenKind::LCurly => (),
             _ => return Err(ParseError::UnexpectedTokenFound {
                 expect: "{",
-                got: String::new(), // TODO
                 span: stack.inspect().span(),
             })
         }
@@ -169,7 +164,6 @@ impl NonEmptyParser {
             TokenKind::Break => (),
             _ => return Err(ParseError::UnexpectedTokenFound {
                 expect: "break",
-                got: String::new(),
                 span: stack.inspect().span(),
             })
         }
@@ -178,7 +172,6 @@ impl NonEmptyParser {
             TokenKind::Semicolon => (),
             _ => return Err(ParseError::UnexpectedTokenFound {
                 expect: ";",
-                got: String::new(),
                 span: stack.inspect().span(),
             })
         }
@@ -191,7 +184,6 @@ impl NonEmptyParser {
             TokenKind::Continue => (),
             _ => return Err(ParseError::UnexpectedTokenFound {
                 expect: "continue",
-                got: String::new(),
                 span: stack.inspect().span(),
             })
         }
@@ -200,7 +192,6 @@ impl NonEmptyParser {
             TokenKind::Semicolon => (),
             _ => return Err(ParseError::UnexpectedTokenFound {
                 expect: ";",
-                got: String::new(),
                 span: stack.inspect().span(),
             })
         }
