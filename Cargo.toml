@@ -4,5 +4,6 @@ members = [
     "rcc-ast",
     "rcc-codespan",
     "rcc-lexer",
+    "rcc-parser",
     "rcc-token",
 ]

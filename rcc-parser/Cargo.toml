@@ -1,0 +1,11 @@
+[package]
+name = "rcc-parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nonempty = "0.8.1"
+rcc-ast = { path = "../rcc-ast" }
+rcc-codespan = { path = "../rcc-codespan" }
+rcc-token = { path = "../rcc-token" }
+thiserror = "1.0.40"

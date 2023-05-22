@@ -40,6 +40,11 @@ dependencies = [
 [[package]]
 name = "rcc"
 version = "0.1.0"
+dependencies = [
+ "nonempty",
+ "rcc-lexer",
+ "rcc-parser",
+]
 
 [[package]]
 name = "rcc-ast"
@@ -58,6 +63,17 @@ version = "0.1.0"
 name = "rcc-lexer"
 version = "0.1.0"
 dependencies = [
+ "rcc-codespan",
+ "rcc-token",
+ "thiserror",
+]
+
+[[package]]
+name = "rcc-parser"
+version = "0.1.0"
+dependencies = [
+ "nonempty",
+ "rcc-ast",
  "rcc-codespan",
  "rcc-token",
  "thiserror",

@@ -4,7 +4,7 @@ use rcc_codespan::{Spannable, CodeSpan};
 #[derive(new)]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Token {
-    kind: TokenKind,
+    pub kind: TokenKind,
     span: CodeSpan,
 }
 
@@ -63,4 +63,14 @@ pub enum TokenKind {
     Integer(u64),
     /// "hello_world", "Ident", "L10"
     Identifier(String),
+
+    // Keyword
+    /// if
+    If,
+    /// else
+    Else,
+    /// break
+    Break,
+    /// continue
+    Continue,
 }

@@ -3,6 +3,9 @@ use nonempty::NonEmpty;
 use rcc_codespan::{CodeSpan, Spannable};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Program(pub Vec<Statement>);
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Statement {
     FunctionDeclaration(FunctionDeclaration),
     VariableDeclaration(VariableDeclaration),
@@ -39,6 +42,7 @@ impl Spannable for Statement {
 /// }
 #[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FunctionDeclaration {
+    span: CodeSpan,
     name: FunctionDeclName,
     param: Vec<FunctionDeclParam>,
     body: Vec<Statement>,
@@ -46,14 +50,7 @@ pub struct FunctionDeclaration {
 
 impl Spannable for FunctionDeclaration {
     fn span(&self) -> CodeSpan {
-        let mut span = self.name.span();
-        for param in self.param.iter() {
-            span += param.span();
-        }
-        for stmt in self.body.iter() {
-            span += stmt.span();
-        }
-        span
+        self.span
     }
 }
 
@@ -261,6 +258,7 @@ impl Spannable for Expression {
     }
 }
 
+/// 100, 0x100
 #[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct IntegerExpression {
     span: CodeSpan,
@@ -273,6 +271,7 @@ impl Spannable for IntegerExpression {
     }
 }
 
+/// name
 #[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct VariableExpression {
     span: CodeSpan,
@@ -316,6 +315,7 @@ impl Spannable for VariableAssignName {
     }
 }
 
+/// name(p1, ..., pn)
 #[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FunctionCall {
     name: FunctionCallName,
@@ -360,6 +360,7 @@ impl Spannable for PrefixExpression {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PrefixOp {
+    /// "-"
     Negation,
 }
 
@@ -379,14 +380,24 @@ impl Spannable for InfixExpression {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InfixOp {
+    /// "+"
     Add,
+    /// "-"
     Sub,
+    /// "*"
     Mul,
+    /// "/"
     Div,
+    /// "<"
     LT,
+    /// ">"
     GT,
+    /// "<="
     LE,
+    /// ">="
     GE,
+    /// "=="
     EQ,
+    /// "!="
     NE,
 }

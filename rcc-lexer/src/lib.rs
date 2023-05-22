@@ -130,7 +130,14 @@ impl<'a> LexInput<'a> {
             body.push(self.next());
         }
         let span = CodeSpan::new(start, self.offset() - start);
-        Ok(Token::new(TokenKind::Identifier(body), span))
+        let kind = match body.as_str() {
+            "if" => TokenKind::If,
+            "else" => TokenKind::Else,
+            "break" => TokenKind::Break,
+            "continue" => TokenKind::Continue,
+            _ => TokenKind::Identifier(body),
+        };
+        Ok(Token::new(kind, span))
     }
 }
 
@@ -144,6 +151,8 @@ fn is_identifier_rest(ch: char) -> bool {
 
 #[cfg(test)]
 mod test {
+    use std::assert_eq;
+
     use rcc_codespan::CodeSpan;
     use rcc_token::{Token, TokenKind};
     use super::lex;
@@ -206,6 +215,17 @@ mod test {
             Token::new(TokenKind::Integer(0o10), CodeSpan::new(13, 3)),
             Token::new(TokenKind::Integer(0),    CodeSpan::new(17, 1)),
         ])
+    }
+
+    #[test]
+    fn keyword() {
+        let tokens = lex("if else break continue").unwrap();
+        assert_eq!(tokens, vec![
+            Token::new(TokenKind::If,       CodeSpan::new(0, 2)),
+            Token::new(TokenKind::Else,     CodeSpan::new(3, 4)),
+            Token::new(TokenKind::Break,    CodeSpan::new(8, 5)),
+            Token::new(TokenKind::Continue, CodeSpan::new(14, 8)),
+        ]);
     }
 
     #[test]
