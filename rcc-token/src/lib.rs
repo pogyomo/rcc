@@ -73,4 +73,10 @@ pub enum TokenKind {
     Break,
     /// continue
     Continue,
+    /// return
+    Return,
+    /// while
+    While,
+    /// for
+    For,
 }

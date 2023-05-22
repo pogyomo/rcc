@@ -135,6 +135,9 @@ impl<'a> LexInput<'a> {
             "else" => TokenKind::Else,
             "break" => TokenKind::Break,
             "continue" => TokenKind::Continue,
+            "return" => TokenKind::Return,
+            "while" => TokenKind::While,
+            "for" => TokenKind::For,
             _ => TokenKind::Identifier(body),
         };
         Ok(Token::new(kind, span))
@@ -219,12 +222,15 @@ mod test {
 
     #[test]
     fn keyword() {
-        let tokens = lex("if else break continue").unwrap();
+        let tokens = lex("if else break continue return while for").unwrap();
         assert_eq!(tokens, vec![
             Token::new(TokenKind::If,       CodeSpan::new(0, 2)),
             Token::new(TokenKind::Else,     CodeSpan::new(3, 4)),
             Token::new(TokenKind::Break,    CodeSpan::new(8, 5)),
             Token::new(TokenKind::Continue, CodeSpan::new(14, 8)),
+            Token::new(TokenKind::Return,   CodeSpan::new(23, 6)),
+            Token::new(TokenKind::While,    CodeSpan::new(30, 5)),
+            Token::new(TokenKind::For,      CodeSpan::new(36, 3)),
         ]);
     }
 

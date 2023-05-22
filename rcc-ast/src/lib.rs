@@ -2,8 +2,24 @@ use derive_new::new;
 use nonempty::NonEmpty;
 use rcc_codespan::{CodeSpan, Spannable};
 
+macro_rules! impl_conv {
+    ($target:ident, $($source:ident),*) => {$(
+        impl From<$source> for $target {
+            fn from(source: $source) -> $target {
+                $target::$source(source)
+            }
+        }
+    )*};
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Program(pub Vec<Statement>);
+
+impl_conv!(
+    Statement,
+    FunctionDeclaration, VariableDeclaration, ExpressionStatement, ReturnStatement, BreakStatement,
+    ContinueStatement, ForStatement, WhileStatement, IfStatement, BlockStatement
+);
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Statement {
@@ -16,6 +32,7 @@ pub enum Statement {
     ForStatement(ForStatement),
     WhileStatement(WhileStatement),
     IfStatement(IfStatement),
+    BlockStatement(BlockStatement),
 }
 
 impl Spannable for Statement {
@@ -31,6 +48,7 @@ impl Spannable for Statement {
             ForStatement(stmt) => stmt.span(),
             WhileStatement(stmt) => stmt.span(),
             IfStatement(stmt) => stmt.span(),
+            BlockStatement(stmt) => stmt.span(),
         }
     }
 }
@@ -42,15 +60,14 @@ impl Spannable for Statement {
 /// }
 #[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FunctionDeclaration {
-    span: CodeSpan,
     name: FunctionDeclName,
     param: Vec<FunctionDeclParam>,
-    body: Vec<Statement>,
+    body: BlockStatement,
 }
 
 impl Spannable for FunctionDeclaration {
     fn span(&self) -> CodeSpan {
-        self.span
+        self.name.span() + self.body.span()
     }
 }
 
@@ -91,18 +108,21 @@ impl Spannable for FunctionDeclParam {
 }
 
 /// v1, v2, ..., vn;
-#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct VariableDeclaration {
+    span: CodeSpan,
     name: NonEmpty<VariableDeclName>,
+}
+
+impl VariableDeclaration {
+    pub fn new(span: CodeSpan, head: VariableDeclName, tail: Vec<VariableDeclName>) -> Self {
+        Self { span, name: NonEmpty { head, tail }}
+    }
 }
 
 impl Spannable for VariableDeclaration {
     fn span(&self) -> CodeSpan {
-        let mut span = self.name.first().span();
-        for name in self.name.iter() {
-            span += name.span();
-        }
-        span
+        self.span
     }
 }
 
@@ -127,12 +147,13 @@ impl Spannable for VariableDeclName {
 /// expr;
 #[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ExpressionStatement {
+    span: CodeSpan,
     expr: Expression,
 }
 
 impl Spannable for ExpressionStatement {
     fn span(&self) -> CodeSpan {
-        self.expr.span()
+        self.span
     }
 }
 
@@ -184,7 +205,7 @@ pub struct ForStatement {
     init_expr: Option<Expression>,
     cond_expr: Option<Expression>,
     update_expr: Option<Expression>,
-    body: Vec<Statement>,
+    body: BlockStatement,
 }
 
 impl Spannable for ForStatement {
@@ -202,7 +223,7 @@ impl Spannable for ForStatement {
 pub struct WhileStatement {
     span: CodeSpan,
     cond_expr: Expression,
-    body: Vec<Statement>,
+    body: BlockStatement,
 }
 
 impl Spannable for WhileStatement {
@@ -224,8 +245,8 @@ impl Spannable for WhileStatement {
 pub struct IfStatement {
     span: CodeSpan,
     cond_expr: Expression,
-    body: Vec<Statement>,
-    else_stmt: Option<Vec<Statement>>
+    body: BlockStatement,
+    else_body: Option<BlockStatement>
 }
 
 impl Spannable for IfStatement {
@@ -233,6 +254,29 @@ impl Spannable for IfStatement {
         self.span
     }
 }
+
+/// {
+///     stmt1;
+///     ...
+///     stmtn;
+/// }
+#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct BlockStatement {
+    span: CodeSpan,
+    body: Vec<Statement>,
+}
+
+impl Spannable for BlockStatement {
+    fn span(&self) -> CodeSpan {
+        self.span
+    }
+}
+
+impl_conv!(
+    Expression,
+    IntegerExpression, VariableExpression, VariableAssignment, FunctionCall, PrefixExpression,
+    InfixExpression
+);
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Expression {
@@ -284,34 +328,16 @@ impl Spannable for VariableExpression {
     }
 }
 
-/// name = expr
+/// lhs = rhs
 #[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct VariableAssignment {
-    name: VariableAssignName,
-    expr: Box<Expression>,
+    lhs: Box<Expression>,
+    rhs: Box<Expression>,
 }
 
 impl Spannable for VariableAssignment {
     fn span(&self) -> CodeSpan {
-        self.name.span() + self.expr.span()
-    }
-}
-
-#[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct VariableAssignName {
-    name: String,
-    span: CodeSpan,
-}
-
-impl VariableAssignName {
-    pub fn name(&self) -> &str {
-        self.name.as_str()
-    }
-}
-
-impl Spannable for VariableAssignName {
-    fn span(&self) -> CodeSpan {
-        self.span
+        self.lhs.span() + self.rhs.span()
     }
 }
 
@@ -367,7 +393,7 @@ pub enum PrefixOp {
 /// lhs op rhs
 #[derive(new, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct InfixExpression {
-    op: PrefixOp,
+    op: InfixOp,
     lhs: Box<Expression>,
     rhs: Box<Expression>,
 }
