@@ -1,10 +1,10 @@
-use std::rc::Rc;
+use std::{rc::Rc, matches};
 use nonempty::NonEmpty;
 use rcc_ast::{
     Program, Statement, IfStatement, BreakStatement, Expression, IntegerExpression, ContinueStatement,
     ReturnStatement, BlockStatement, ForStatement, WhileStatement, ExpressionStatement, FunctionDeclaration,
     FunctionDeclName, FunctionDeclParam, VariableDeclaration, VariableDeclName, PrefixExpression, PrefixOp,
-    InfixExpression, InfixOp, VariableAssignment, VariableExpression
+    InfixExpression, InfixOp, VariableAssignment, VariableExpression, FunctionCallName, FunctionCall
 };
 use rcc_codespan::{Spannable, CodeSpan};
 use rcc_token::{Token, TokenKind};
@@ -578,6 +578,7 @@ impl NonEmptyParser {
     }
 
     fn parse_primary(&mut self) -> Result<Expression, ParseError> {
+        let position = self.position;
         let mut stack = TokenStack::new(self.next_or_err("integer, identifier or (")?);
         match &stack.inspect().kind {
             TokenKind::LParen => {
@@ -591,13 +592,72 @@ impl NonEmptyParser {
                     })
                 }
             }
-            TokenKind::Integer(value) => Ok(IntegerExpression::new(stack.span(), *value).into()),
-            TokenKind::Identifier(s) => Ok(VariableExpression::new(stack.span(), s.clone()).into()),
+            TokenKind::Integer(value) => {
+                Ok(IntegerExpression::new(stack.span(), *value).into())
+            }
+            TokenKind::Identifier(s) => {
+                if let Some(token) = self.peek() {
+                    if matches!(token.kind, TokenKind::LParen) {
+                        self.position = position;
+                        self.parse_func_call()
+                    } else {
+                        Ok(VariableExpression::new(stack.span(), s.clone()).into())
+                    }
+                } else {
+                    Ok(VariableExpression::new(stack.span(), s.clone()).into())
+                }
+            }
             _ => return Err(ParseError::UnexpectedTokenFound {
                 expect: "integer, identifier or (",
                 span: stack.inspect().span()
             })
         }
+    }
+
+    fn parse_func_call(&mut self) -> Result<Expression, ParseError> {
+        let mut stack = TokenStack::new(self.next_or_err("identifier")?);
+        let name = match &stack.inspect().kind {
+            TokenKind::Identifier(s) => {
+                FunctionCallName::new(stack.inspect().span(), s.clone())
+            }
+            _ => return Err(ParseError::UnexpectedTokenFound {
+                expect: "identifier",
+                span: stack.inspect().span()
+            })
+        };
+
+        stack.push(self.next_or_err("(")?);
+        if !matches!(stack.inspect().kind, TokenKind::LParen) {
+            return Err(ParseError::UnexpectedTokenFound {
+                expect: "(",
+                span: stack.inspect().span(),
+            })
+        }
+
+        let mut param = Vec::new();
+        loop {
+            stack.push(self.peek_or_err("expression or )")?);
+            match &stack.inspect().kind {
+                TokenKind::RParen => {
+                    self.next();
+                    break;
+                }
+                _ => {
+                    param.push(self.parse_expr()?);
+                    stack.push(self.next_or_err(", or )")?);
+                    match &stack.inspect().kind {
+                        TokenKind::Comma => (),
+                        TokenKind::RParen => break,
+                        _ => return Err(ParseError::UnexpectedTokenFound {
+                            expect: ", or )",
+                            span: stack.inspect().span(),
+                        })
+                    }
+                }
+            }
+        }
+
+        Ok(FunctionCall::new(name, param).into())
     }
 }
 
